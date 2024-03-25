@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<!-- https://www.arcgis.com/home/index.html -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uai Tour</title>
+    <link rel="stylesheet" href="test.css">
+    <link rel="stylesheet" href="https://js.arcgis.com/4.29/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.29/"></script>
+    <script>
+        require([
+            "esri/WebMap",
+            "esri/views/MapView",
+            "esri/widgets/Legend",
+            "esri/Basemap",
+            "esri/widgets/BasemapGallery",
+            "esri/widgets/Expand",
+            "esri/core/reactiveUtils",
+            "esri/widgets/Locate",
+            "esri/widgets/Search"
+        ],
+        function(
+            WebMap,
+            MapView,
+            Legend,
+            Basemap,
+            BasemapGallery,
+            Expand,
+            reactiveUtils,
+            Locate,
+            Search
+        ){
+            // Multiply blend mode emphasizes the darkest parts of overlapping layers
+            // by multiplying colors of the top layer and the background layer.
+            // This blend mode is useful to have the hillshades to show through the top layer.
+            const webmap = new WebMap({
+                portalItem: {
+                //  autocasts as new PortalItem()
+                id: "952b142fee514b44a62413e3d4827ccf"
+                }
+            });
+
+            const view = new MapView({
+                container: "viewDiv",
+                map: webmap,
+                zoom: 10.75
+                /*
+                camera: {
+                    position: {
+                        longitude: -74.03423765,
+                        latitude: 40.69173202,
+                        z: 1620.71497
+                    }// Manhattan, NY,
+                    heading: 57.02,
+                    tilt: 56.97
+                }
+                */
+            });
+
+            view.when(() => {
+                /*
+                BASEMAP
+                */
+                // Create a BasemapGallery widget instance and set
+                // its container to a div element
+                const basemapGallery = new BasemapGallery({
+                    view: view,
+                    container: document.createElement("div")
+                });
+
+                /*
+                SEARCH
+                */
+                const searchWidget = new Search({
+                    view: view
+                });
+
+                /*
+                LEGEND
+                */
+                // get the first layer in the collection of operational layers in the WebMap
+                // when the resources in the MapView have loaded.
+                const featureLayer = webmap.layers.getItemAt(0);
+                const legend = new Legend({
+                    view: view,
+                    layerInfos: [
+                    {
+                        layer: featureLayer,
+                        title: "Belo Horizonte"
+                    }
+                    ]
+                });
+                // Add widget to the bottom right corner of the view
+                view.ui.add(legend, "bottom-right");
+
+                /*
+                LOCATE
+                */
+                const locateBtn = new Locate({
+                    view: view
+                });
+                // Add the locate widget to the top left corner of the view
+                view.ui.add(locateBtn, {
+                    position: "top-left"
+                });
+
+                // clear the view's default UI components if
+                // app is used on a small device
+                reactiveUtils.watch(() => [view.heightBreakpoint, view.widthBreakpoint],
+                    ([heightBreakpoint, widthBreakpoint]) => {
+                    const ui = view.ui;
+
+                    if (heightBreakpoint === "xsmall" || widthBreakpoint === "xsmall") {
+                        ui.components = ["attribution"];
+                    } else {
+                        ui.components = ["attribution", "navigation-toggle", "compass", "zoom"];
+                    }
+                });
+
+                /*
+                EXPAND
+                */
+                // Create an Expand instance and set the content
+                // property to the DOM node of the basemap gallery widget
+                // Use an Esri icon font to represent the content inside
+                // of the Expand widget
+                const bgExpand_baseMap = new Expand({
+                    view: view,
+                    content: basemapGallery
+                });
+                const bgExpand_search = new Expand({
+                    view: view,
+                    content: searchWidget
+                });
+                // close the expand whenever a basemap is selected
+                // on mobile devices
+                reactiveUtils.watch(
+                    () => basemapGallery.activeBasemap,
+                    () => {
+                        const mobileSize = view.heightBreakpoint === "xsmall" || view.widthBreakpoint === "xsmall";
+
+                        if (mobileSize) {
+                        bgExpand.collapse();
+                        }
+                    }
+  
+                );
+                // Add the expand instance to the ui
+                view.ui.add(bgExpand_baseMap, "top-right")
+                view.ui.add(bgExpand_search, "top-right")
+            });
+        });
+    </script>
+</head>
+<body>
+    <header>
+        <h1 id="title">Uai Tour</h1>
+    </header>
+    <main>
+        <div id="map" class="calcite">
+            <div id="viewDiv"></div>
+        </div>
+        <div id="legendaXdesc">
+            <div class="container">
+                <div id="description" class="column">
+                  <h2>Descrição</h2>
+                  <p>Explore os pontos de lazer em Belo Horizonte com nosso mapa interativo!<br>
+                    Descubra campos de futebol, quadras esportivas, academias ao ar livre, atrativos turísticos, zonas culturais e praças.<br>
+                    Navegue pelo mapa e encontre os locais ideais para praticar esportes, se exercitar ao ar livre, conhecer pontos turísticos imperdíveis, mergulhar na cultura local e 
+                    relaxar em belas praças.<br>
+                    Seja você um morador local ou um visitante, nosso mapa é seu guia para 
+                    desfrutar ao máximo da diversão e do lazer em Belo Horizonte!</p>
+                </div>
+                <div id="legenda" class="column">
+                  <h2>Legenda</h2>
+                  <ul>
+                    <li>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                            <path d="M12 0c-4.417 0-8 3.582-8 8 0 7.264 8 16 8 16s8-8.736 8-16c0-4.418-3.583-8-8-8zm0 12.9c-1.957 0-3.55-1.593-3.55-3.55 0-1.956 1.593-3.55 3.55-3.55s3.55 1.594 3.55 3.55c0 1.957-1.593 3.55-3.55 3.55zm0-6.33c-1.54 0-2.79 1.25-2.79 2.79 0 1.54 1.25 2.79 2.79 2.79s2.79-1.25 2.79-2.79c0-1.54-1.25-2.79-2.79-2.79z" fill="yellow"/>
+                        </svg>
+                        <span>Campos de futebol</span>
+                    </li>
+                    <li>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                            <path d="M12 0c-4.417 0-8 3.582-8 8 0 7.264 8 16 8 16s8-8.736 8-16c0-4.418-3.583-8-8-8zm0 12.9c-1.957 0-3.55-1.593-3.55-3.55 0-1.956 1.593-3.55 3.55-3.55s3.55 1.594 3.55 3.55c0 1.957-1.593 3.55-3.55 3.55zm0-6.33c-1.54 0-2.79 1.25-2.79 2.79 0 1.54 1.25 2.79 2.79 2.79s2.79-1.25 2.79-2.79c0-1.54-1.25-2.79-2.79-2.79z" fill="blue"/>
+                        </svg>
+                        <span>Quadras esportiva</span>
+                    </li>
+                    <li>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                            <path d="M12 0c-4.417 0-8 3.582-8 8 0 7.264 8 16 8 16s8-8.736 8-16c0-4.418-3.583-8-8-8zm0 12.9c-1.957 0-3.55-1.593-3.55-3.55 0-1.956 1.593-3.55 3.55-3.55s3.55 1.594 3.55 3.55c0 1.957-1.593 3.55-3.55 3.55zm0-6.33c-1.54 0-2.79 1.25-2.79 2.79 0 1.54 1.25 2.79 2.79 2.79s2.79-1.25 2.79-2.79c0-1.54-1.25-2.79-2.79-2.79z" fill="green"/>
+                        </svg>
+                        <span>Academia a céu aberto</span>
+                    </li>
+                    <li>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                            <path d="M12 0c-4.417 0-8 3.582-8 8 0 7.264 8 16 8 16s8-8.736 8-16c0-4.418-3.583-8-8-8zm0 12.9c-1.957 0-3.55-1.593-3.55-3.55 0-1.956 1.593-3.55 3.55-3.55s3.55 1.594 3.55 3.55c0 1.957-1.593 3.55-3.55 3.55zm0-6.33c-1.54 0-2.79 1.25-2.79 2.79 0 1.54 1.25 2.79 2.79 2.79s2.79-1.25 2.79-2.79c0-1.54-1.25-2.79-2.79-2.79z" fill="red"/>
+                        </svg>
+                        <span>Atrativos Turístico</span>
+                    </li>
+                    <li>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                            <rect width="24" height="24" fill="orange"/>
+                          </svg>                      
+                        <span>Zona Cultural</span>
+                    </li>
+                    <li>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                            <rect width="24" height="24" fill="green"/>
+                          </svg>  
+                        <span>Praças</span>
+                    </li>
+    
+                  </ul>
+                </div>
+            </div>
+        </div>
+        <div class="links-container">
+            <div class="link-box">
+              <p>ArcGIS: <a href="https://developers.arcgis.com/" target="_blank">Website</a></p>
+            </div>
+            <div class="link-box">
+              <p>Environmental Systems Research Institute (ESRI): <a href="https://www.esri.com/pt-br/home" target="_blank">Website</a></p>
+            </div>
+          </div>
+    </main>
+    <footer id="footer">
+        <div><p>PUC Minas</p></div>
+        <div><p>Trabalho Prático - Engenharia de Software 2 <br> Lucas Zegrine Duarte</p></div>
+    </footer>
+</body>
+</html>
